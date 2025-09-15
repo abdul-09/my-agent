@@ -2,6 +2,14 @@
   "name": "my-agent",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run index.ts",
+    "review": "bun run index.ts",
+    "review:staged": "bun run index.ts --staged",
+    "review:report": "bun run index.ts --report"
+  },
+  "author": "Abdulaziz Hussein",
+  "license": "MIT",
   "private": true,
   "devDependencies": {
     "@types/bun": "latest"
