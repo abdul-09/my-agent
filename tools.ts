@@ -1,5 +1,5 @@
 import { tool } from "ai";
-import { simpleGit, type SimpleGit } from "simple-git";
+import { simpleGit, type SimpleGit, type DiffResultTextFile, type DiffResultBinaryFile, type DiffResultNameStatusFile } from "simple-git";
 import { z } from "zod";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -51,12 +51,12 @@ interface FileDiff {
   changes: number;
 }
 
-interface GitFileStatus {
-  file: string;
-  changes: number;
-  insertions: number;
-  deletions: number;
-}
+// interface GitFileStatus {
+//   file: string;
+//   changes: number;
+//   insertions: number;
+//   deletions: number;
+// }
 
 interface CodeReviewResult {
   changes: FileDiff[];
@@ -125,9 +125,14 @@ async function getFileChangesInDirectory({
     const summary = await git.diffSummary();
     const diffs: FileDiff[] = [];
 
-    const filesToProcess = summary.files.filter((file: GitFileStatus) => 
-      !shouldExcludeFile(file.file, additionalExcludes)
-    );
+    // Fix: Type the files array and filter with proper type handling
+    const filesToProcess = summary.files.filter((file: DiffResultTextFile | DiffResultBinaryFile | DiffResultNameStatusFile) => {
+      // Check if it's a text file with the properties we need
+      if ('file' in file && 'changes' in file) {
+        return !shouldExcludeFile(file.file, additionalExcludes);
+      }
+      return false;
+    }) as (DiffResultTextFile | DiffResultNameStatusFile)[]; // We can safely cast since we filtered
 
     const batches = [];
     for (let i = 0; i < filesToProcess.length; i += DEFAULT_OPTIONS.maxConcurrentDiffs) {
@@ -135,7 +140,7 @@ async function getFileChangesInDirectory({
     }
 
     for (const batch of batches) {
-      const batchPromises = batch.map(async (file: GitFileStatus) => {
+      const batchPromises = batch.map(async (file: DiffResultTextFile | DiffResultNameStatusFile) => {
         try {
           const diff: string = await git.diff(["--", file.file]);
           return {
@@ -297,6 +302,9 @@ function generateMessageBody(changes: FileDiff[]): string {
   }
 
   const primaryFile = mainFiles[0];
+  if (!primaryFile) {
+    return "update files with various changes";
+  }
   const fileName = path.basename(primaryFile.file, path.extname(primaryFile.file));
   
   return `update ${fileName} with ${changes.length} file${changes.length > 1 ? 's' : ''} changed`;

@@ -46,7 +46,7 @@ async function main() {
     await codeReviewAgent(reviewPrompt);
 
     // You can also use specific tool-focused prompts:
-    /*
+    
     await codeReviewAgent(
       "Get the current branch information for '../my-agent' directory"
     );
@@ -58,7 +58,6 @@ async function main() {
     await codeReviewAgent(
       "Perform a comprehensive code review of '../my-agent' including generating a markdown report"
     );
-    */
 
   } catch (error) {
     console.error("❌ Error running code review agent:", error);
